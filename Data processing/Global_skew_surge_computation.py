@@ -159,6 +159,11 @@ def process_station(cluster: int, Tide_dir: str, TWL_dir: str, sksurge_var: str,
     merged_df.drop(columns=['time_tide', 'time'], inplace=True)
 
     merged_df['skew_surge'] = merged_df['waterlevel'] - merged_df['tide']
+    merged_df["time_diff"] = (merged_df["tide_time"] - merged_df["surge_time"]).abs()
+    # For each surge_time, keep the row with the smallest difference
+    closest_rows = merged_df.loc[merged_df.groupby("surge_time")["time_diff"].idxmin()]
+    closest_rows = closest_rows.drop(columns="time_diff")
+    merged_df = closest_rows
 
     os.makedirs(sksurge_parq, exist_ok=True)
     file_path = os.path.join(sksurge_parq, f"station_{cluster}.parquet")
