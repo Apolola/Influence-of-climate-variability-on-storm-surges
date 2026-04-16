@@ -141,7 +141,6 @@ def process_station(cluster: int, Tide_dir: str, TWL_dir: str, sksurge_var: str,
         with xr.open_mfdataset(twl_paths, engine="h5netcdf") as ds_wl:
             wl = ds_wl.isel(stations=cluster).waterlevel.load()
             twl_list.append(wl)
-        del ds_tide, ds_wl#
         gc.collect()
 
     full_tide = xr.concat(tide_list, dim='time')
@@ -187,11 +186,11 @@ def main(cluster: int, log_path: str, start_year: int, end_year: int):
     logging.basicConfig(filename=log_path, level=logging.INFO,
                         format='%(asctime)s %(levelname)s: %(message)s')
 
-    sksurge_var = "/gpfs/work5/0/prjs0911/GTSM_ERA5_Extension/sksurge_global_results"
-    sksurge_parq = "/gpfs/work5/0/prjs0911/GTSM_ERA5_Extension/sksurge_parquets"
+    sksurge_var = "/GTSM_ERA5_Extension/sksurge_global_results"
+    sksurge_parq = "/GTSM_ERA5_Extension/sksurge_parquets"
 
-    Tide_dir = "/gpfs/work5/0/prjs0911/Tidal_elevation/tide_{year}_*_v1.nc"
-    TWL_dir = "/gpfs/work5/0/prjs0911/GTSM_ERA5_Extension/TWL_10mins/reanalysis_waterlevel_10min_{year}_*_v2.nc"
+    Tide_dir = "/Tidal_elevation/tide_{year}_*_v1.nc"
+    TWL_dir = "/GTSM_ERA5_Extension/TWL_10mins/reanalysis_waterlevel_10min_{year}_*_v2.nc"
 
     try:
         logging.info(f"Starting station {cluster} for years {start_year}-{end_year}")
