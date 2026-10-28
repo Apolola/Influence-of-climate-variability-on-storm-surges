@@ -160,15 +160,21 @@ def main(cluster):
 
         def forward_selection(X, y):
             selected_features = []
+            current_adj_rsq = float('-inf')
             while True:
                 remaining_features = [f for f in X.columns if f not in selected_features]
-                new_pval = pd.Series(index=remaining_features)
+                new_pval = pd.Series(index=remaining_features, dtype=float)
+                new_adj_rsq = pd.Series(index=remaining_features, dtype=float)
                 for feature in remaining_features:
                     model = sm.OLS(y, sm.add_constant(X[selected_features + [feature]])).fit()
-                    new_pval[feature] = model.pvalues[feature]
-                min_pval = new_pval.min()
-                if min_pval < 0.05:  # Adjust threshold as needed
-                    selected_features.append(new_pval.idxmin())
+                    new_pval[feature] = model.pvalues[feature] # indiviual model p-value
+                    new_adj_rsq[feature] = model.rsquared_adj # Adjusted R-squared
+                eligible = (new_pval < 0.05) & (new_adj_rsq > current_adj_rsq) # Keep candidates whose overall model p-value is significant and improves the adjusted R-squared
+                if eligible.any():
+                    # Update selected features and the current model's adjusted R²
+                    best_feature = new_adj_rsq[eligible].idxmax()
+                    selected_features.append(best_feature)
+                    current_adj_rsq = new_adj_rsq[best_feature]
                 else:
                     break
             return selected_features
@@ -208,7 +214,7 @@ def main(cluster):
         print("Forward_stepwise_regression:\n", results_fwd_df)
         
 #%%% Fit non-stationary GEV with selected predictors if identified as significant
-        selected_predictor = results_fwd_df.loc[results_fwd_df['f_pvalue'].idxmin(), "predictors"]
+        selected_predictor = results_fwd_df.loc[results_fwd_df['adj_r_squared'].idxmax(), "predictors"]
         print (selected_predictor)
         
         if not selected_predictor:  # Check if list is empty
